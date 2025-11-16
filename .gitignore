@@ -1,0 +1,57 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+venv/
+.pytest_cache/
+.coverage
+htmlcov/
+.uv/
+
+# Ruby
+*.gem
+*.rbc
+.bundle/
+vendor/bundle/
+.byebug_history
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Secrets
+**/secrets.yml
+**/*secret*
+**/*credentials*
+!config/credentials.yml.enc
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+.docker/data/
+
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.backup
+.terraform.lock.hcl
+
+# ML
+ml_pipeline/data/raw/
+ml_pipeline/models/artifacts/
+*.h5
+*.pkl
+
+# Logs
+logs/
+*.log

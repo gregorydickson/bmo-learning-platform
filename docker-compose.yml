@@ -1,0 +1,104 @@
+version: '3.9'
+
+services:
+  # PostgreSQL with pgvector
+  postgres:
+    image: ankane/pgvector:latest
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: bmo_learning_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # Python AI Service
+  ai_service:
+    build:
+      context: ./app/ai_service
+      dockerfile: Dockerfile
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/bmo_learning_dev
+      - REDIS_URL=redis://redis:6379/0
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./app/ai_service:/app
+      - ai_service_cache:/app/.cache
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # Rails API Service
+  rails_api:
+    build:
+      context: ./app/rails_api
+      dockerfile: Dockerfile
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/bmo_learning_dev
+      - REDIS_URL=redis://redis:6379/0
+      - AI_SERVICE_URL=http://ai_service:8000
+    env_file:
+      - .env
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./app/rails_api:/app
+      - rails_bundle:/usr/local/bundle
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: bundle exec puma -C config/puma.rb
+
+  # Sidekiq (Background Jobs)
+  sidekiq:
+    build:
+      context: ./app/rails_api
+      dockerfile: Dockerfile
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/bmo_learning_dev
+      - REDIS_URL=redis://redis:6379/0
+    env_file:
+      - .env
+    volumes:
+      - ./app/rails_api:/app
+      - rails_bundle:/usr/local/bundle
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: bundle exec sidekiq -C config/sidekiq.yml
+
+volumes:
+  postgres_data:
+  redis_data:
+  ai_service_cache:
+  rails_bundle:

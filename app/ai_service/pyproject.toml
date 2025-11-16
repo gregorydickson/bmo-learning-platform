@@ -1,0 +1,78 @@
+[project]
+name = "bmo-learning-ai"
+version = "0.1.0"
+description = "AI service for BMO microlearning platform"
+requires-python = ">=3.11"
+
+dependencies = [
+    # LangChain Core (Latest stable versions - Nov 2025)
+    "langchain==1.0.7",
+    "langchain-core==1.0.4",
+    "langchain-openai==1.0.3",
+    "langchain-community==0.4.1",
+
+    # Vector Stores
+    "chromadb==0.5.23",
+    "pgvector>=0.2.4",
+
+    # Document Loaders
+    "pypdf>=4.0.0",
+    "unstructured>=0.12.0",
+
+    # ML & Data
+    "numpy>=1.26.0",
+    "pandas>=2.1.0",
+    "scikit-learn>=1.4.0",
+    "xgboost>=2.0.0",
+
+    # API & Web
+    "fastapi==0.121.2",
+    "uvicorn==0.34.0",
+    "httpx==0.28.1",
+
+    # Database
+    "psycopg2-binary==2.9.9",
+    "sqlalchemy>=2.0.0",
+    "redis==5.2.1",
+
+    # OpenAI
+    "openai==2.8.0",
+
+    # Utilities
+    "pydantic==2.12.4",
+    "pydantic-settings==2.7.1",
+    "python-dotenv>=1.0.0",
+    "structlog>=24.1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-cov>=4.1.0",
+    "pytest-asyncio>=0.23.0",
+    "black>=24.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.8.0",
+    "pre-commit>=3.6.0",
+]
+
+[tool.black]
+line-length = 100
+target-version = ['py311']
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+select = ["E", "F", "I", "N", "W", "B", "SIM"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_functions = "test_*"
+addopts = "-v --cov=app/ai_service --cov-report=html --cov-report=term"

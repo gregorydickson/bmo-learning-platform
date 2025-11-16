@@ -1,0 +1,22 @@
+version: '3.9'
+
+services:
+  postgres_test:
+    image: ankane/pgvector:latest
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: bmo_learning_test
+    tmpfs:
+      - /var/lib/postgresql/data
+
+  ai_service_test:
+    build:
+      context: ./app/ai_service
+      dockerfile: Dockerfile
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres_test:5432/bmo_learning_test
+      - TESTING=true
+    depends_on:
+      - postgres_test
+    command: uv run pytest
