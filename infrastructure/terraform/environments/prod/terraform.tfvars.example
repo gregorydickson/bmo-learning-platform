@@ -1,0 +1,27 @@
+# AWS Configuration
+aws_region = "us-east-1"
+
+# Environment
+environment = "prod"
+
+# Networking
+vpc_cidr = "10.0.0.0/16"
+availability_zones = ["us-east-1a", "us-east-1b", "us-east-1c"]
+
+# ECS
+ecs_cluster_name = "bmo-learning-prod"
+ai_service_cpu    = 1024
+ai_service_memory = 2048
+rails_api_cpu     = 512
+rails_api_memory  = 1024
+
+# Database
+db_instance_class = "db.t3.medium"
+db_allocated_storage = 100
+
+# Redis
+redis_node_type = "cache.t3.small"
+
+# Monitoring
+enable_cloudwatch_alarms = true
+slack_webhook_url = ""

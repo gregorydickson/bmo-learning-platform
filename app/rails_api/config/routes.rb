@@ -5,7 +5,17 @@ Rails.application.routes.draw do
   # API routes
   namespace :api do
     namespace :v1 do
-      # API endpoints will be added in Phase 3
+      resources :learners, only: [:index, :show, :create, :update] do
+        member do
+          get :progress
+        end
+      end
+
+      resources :learning_paths, only: [:create, :show, :index]
+
+      resources :quiz_responses, only: [:create]
+
+      get '/analytics/dashboard', to: 'analytics#dashboard'
     end
   end
 end
