@@ -22,7 +22,7 @@ variable "environment" {
 variable "availability_zones" {
   description = "Availability zones"
   type        = list(string)
-  default     = ["us-east-1a", "us-east-1b"]
+  default     = ["us-east-2a", "us-east-2b"]
 }
 
 resource "aws_vpc" "main" {
@@ -92,8 +92,62 @@ resource "aws_route_table_association" "public" {
   route_table_id = aws_route_table.public.id
 }
 
+# Elastic IPs for NAT Gateways
+resource "aws_eip" "nat" {
+  count  = length(var.availability_zones)
+  domain = "vpc"
+
+  tags = {
+    Name        = "bmo-learning-${var.environment}-nat-eip-${count.index + 1}"
+    Environment = var.environment
+  }
+
+  depends_on = [aws_internet_gateway.main]
+}
+
+# NAT Gateways (one per AZ for high availability)
+resource "aws_nat_gateway" "main" {
+  count         = length(var.availability_zones)
+  allocation_id = aws_eip.nat[count.index].id
+  subnet_id     = aws_subnet.public[count.index].id
+
+  tags = {
+    Name        = "bmo-learning-${var.environment}-nat-${count.index + 1}"
+    Environment = var.environment
+  }
+
+  depends_on = [aws_internet_gateway.main]
+}
+
+# Route tables for private subnets
+resource "aws_route_table" "private" {
+  count  = length(var.availability_zones)
+  vpc_id = aws_vpc.main.id
+
+  route {
+    cidr_block     = "0.0.0.0/0"
+    nat_gateway_id = aws_nat_gateway.main[count.index].id
+  }
+
+  tags = {
+    Name        = "bmo-learning-${var.environment}-private-rt-${count.index + 1}"
+    Environment = var.environment
+  }
+}
+
+# Associate private subnets with their route tables
+resource "aws_route_table_association" "private" {
+  count          = length(aws_subnet.private)
+  subnet_id      = aws_subnet.private[count.index].id
+  route_table_id = aws_route_table.private[count.index].id
+}
+
 output "vpc_id" {
   value = aws_vpc.main.id
+}
+
+output "vpc_cidr" {
+  value = aws_vpc.main.cidr_block
 }
 
 output "public_subnet_ids" {
@@ -102,4 +156,8 @@ output "public_subnet_ids" {
 
 output "private_subnet_ids" {
   value = aws_subnet.private[*].id
+}
+
+output "nat_gateway_ids" {
+  value = aws_nat_gateway.main[*].id
 }

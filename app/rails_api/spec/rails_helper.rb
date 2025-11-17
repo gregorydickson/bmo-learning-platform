@@ -9,6 +9,9 @@ abort("The Rails environment is running in production mode!") if Rails.env.produ
 require 'rspec/rails'
 
 # Add additional requires below this line. Rails is not loaded until this point!
+require 'factory_bot_rails'
+require 'webmock/rspec'
+require 'vcr'
 
 # Requires supporting ruby files with custom matchers and macros, etc, in
 # spec/support/ and its subdirectories.
@@ -40,6 +43,29 @@ RSpec.configure do |config|
 
   # Filter lines from Rails gems in backtraces.
   config.filter_rails_from_backtrace!
-  # arbitrary gems may also be filtered via:
-  # config.filter_gems_from_backtrace("gem name")
+
+  # Include FactoryBot methods
+  config.include FactoryBot::Syntax::Methods
+
+  # Configure shoulda matchers
+  Shoulda::Matchers.configure do |shoulda_config|
+    shoulda_config.integrate do |with|
+      with.test_framework :rspec
+      with.library :rails
+    end
+  end
+
+  # WebMock configuration - disable real HTTP requests
+  WebMock.disable_net_connect!(allow_localhost: true)
+
+  # VCR configuration for recording HTTP interactions
+  VCR.configure do |vcr_config|
+    vcr_config.cassette_library_dir = 'spec/vcr_cassettes'
+    vcr_config.hook_into :webmock
+    vcr_config.configure_rspec_metadata!
+    vcr_config.ignore_localhost = true
+    vcr_config.filter_sensitive_data('<OPENAI_API_KEY>') { ENV['OPENAI_API_KEY'] }
+    vcr_config.filter_sensitive_data('<TWILIO_AUTH_TOKEN>') { ENV['TWILIO_AUTH_TOKEN'] }
+    vcr_config.filter_sensitive_data('<SLACK_BOT_TOKEN>') { ENV['SLACK_BOT_TOKEN'] }
+  end
 end

@@ -9,12 +9,23 @@ venv/
 htmlcov/
 .uv/
 
-# Ruby
+# Ruby/Rails
 *.gem
 *.rbc
 .bundle/
 vendor/bundle/
 .byebug_history
+tmp/
+log/
+public/uploads/
+public/system/
+public/assets/
+db/*.sqlite3
+db/*.sqlite3-*
+.rvmrc
+.ruby-version
+.ruby-gemset
+coverage/
 
 # Environment
 .env
@@ -26,6 +37,8 @@ vendor/bundle/
 **/*secret*
 **/*credentials*
 !config/credentials.yml.enc
+**/terraform.tfvars
+!**/terraform.tfvars.example
 
 # IDE
 .vscode/
@@ -45,13 +58,31 @@ Thumbs.db
 *.tfstate
 *.tfstate.backup
 .terraform.lock.hcl
+terraform.tfplan
 
-# ML
+# ML & Vector Stores
 ml_pipeline/data/raw/
 ml_pipeline/models/artifacts/
 *.h5
 *.pkl
+**/data/chroma/
+**/chroma_db/
+**/vector_store/
+
+# Database dumps
+*.sql
+*.dump
+*.rdb
 
 # Logs
 logs/
 *.log
+
+# Node/NPM (if applicable)
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Personal AI Infrastructure
+.claude/
+.kai/
