@@ -53,7 +53,7 @@ class SafetyValidator:
 
         # PII Detection
         if settings.enable_pii_detection:
-            pii_found = self._detect_pii(content)
+            pii_found = self._detect_pii_list(content)
             if pii_found:
                 results["passed"] = False
                 results["pii_detected"] = True
@@ -82,9 +82,9 @@ class SafetyValidator:
 
         return results
 
-    def _detect_pii(self, text: str) -> list[str]:
+    def _detect_pii_list(self, text: str | None) -> list[str]:
         """
-        Detect potential PII in text.
+        Detect potential PII in text and return list of PII types.
 
         Args:
             text: Text to scan
@@ -92,14 +92,17 @@ class SafetyValidator:
         Returns:
             List of PII types detected
         """
+        if text is None or not isinstance(text, str) or not text:
+            return []
+
         pii_found = []
 
         # Email pattern
         if re.search(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', text):
             pii_found.append("email")
 
-        # Phone pattern (simple)
-        if re.search(r'\b\d{3}[-.]?\d{3}[-.]?\d{4}\b', text):
+        # Phone pattern (simple) - matches (555) 123-4567 and variations
+        if re.search(r'\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b', text):
             pii_found.append("phone")
 
         # SSN pattern (simple)
@@ -111,6 +114,19 @@ class SafetyValidator:
             pii_found.append("credit_card")
 
         return pii_found
+
+    def _detect_pii(self, text: str | None) -> bool:
+        """
+        Detect potential PII in text (boolean return for tests).
+
+        Args:
+            text: Text to scan
+
+        Returns:
+            True if PII found, False otherwise
+        """
+        pii_list = self._detect_pii_list(text)
+        return bool(pii_list)
 
     def _check_moderation(self, text: str) -> dict:
         """
@@ -139,6 +155,19 @@ class SafetyValidator:
         except Exception as e:
             logger.error("Moderation check failed", error=str(e))
             return {"flagged": False, "categories": []}
+
+    def _check_content_moderation(self, text: str) -> bool:
+        """
+        Check content moderation (returns boolean for test compatibility).
+
+        Args:
+            text: Text to moderate
+
+        Returns:
+            True if flagged, False if clean
+        """
+        result = self._check_moderation(text)
+        return result["flagged"]
 
     def _constitutional_check(self, content: str) -> dict:
         """
@@ -197,20 +226,21 @@ class SafetyValidator:
         # Redact emails
         content = re.sub(
             r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b',
-            '[EMAIL]',
+            '[REDACTED]',
             content
         )
 
-        # Redact phone numbers
-        content = re.sub(r'\b\d{3}[-.]?\d{3}[-.]?\d{4}\b', '[PHONE]', content)
+        # Redact phone numbers - match (555) 123-4567, 555-1234, and other patterns
+        content = re.sub(r'\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b', '[REDACTED]', content)
+        content = re.sub(r'\b\d{3}[-.\s]\d{4}\b', '[REDACTED]', content)  # Match 555-1234
 
         # Redact SSN
-        content = re.sub(r'\b\d{3}-\d{2}-\d{4}\b', '[SSN]', content)
+        content = re.sub(r'\b\d{3}-\d{2}-\d{4}\b', '[REDACTED]', content)
 
         # Redact credit cards
         content = re.sub(
             r'\b\d{4}[-\s]?\d{4}[-\s]?\d{4}[-\s]?\d{4}\b',
-            '[CREDIT_CARD]',
+            '[REDACTED]',
             content
         )
 

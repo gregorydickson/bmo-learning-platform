@@ -12,6 +12,7 @@ require 'rspec/rails'
 require 'factory_bot_rails'
 require 'webmock/rspec'
 require 'vcr'
+require 'shoulda/matchers'
 
 # Requires supporting ruby files with custom matchers and macros, etc, in
 # spec/support/ and its subdirectories.

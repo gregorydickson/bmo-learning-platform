@@ -117,6 +117,17 @@ variable "sidekiq_memory" {
   default     = 1024
 }
 
+variable "ai_service_url" {
+  description = "URL for AI Service"
+  type        = string
+}
+
+variable "ai_service_api_key" {
+  description = "API Key for AI Service"
+  type        = string
+  sensitive   = true
+}
+
 # CloudWatch Log Groups
 resource "aws_cloudwatch_log_group" "ai_service" {
   name              = "/ecs/bmo-learning-${var.environment}/ai-service"
@@ -186,6 +197,10 @@ resource "aws_ecs_task_definition" "ai_service" {
         {
           name  = "OPENAI_MODEL"
           value = "gpt-4-turbo-preview"
+        },
+        {
+          name  = "AI_SERVICE_API_KEY"
+          value = var.ai_service_api_key
         }
       ]
 
@@ -268,7 +283,11 @@ resource "aws_ecs_task_definition" "rails_api" {
         },
         {
           name  = "AI_SERVICE_URL"
-          value = "http://localhost:8000"
+          value = var.ai_service_url
+        },
+        {
+          name  = "AI_SERVICE_API_KEY"
+          value = var.ai_service_api_key
         }
       ]
 

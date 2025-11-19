@@ -15,6 +15,12 @@ Rails.application.routes.draw do
 
       resources :quiz_responses, only: [:create]
 
+      resources :documents, only: [:index, :show, :create, :destroy] do
+        member do
+          get :download_url
+        end
+      end
+
       get '/analytics/dashboard', to: 'analytics#dashboard'
     end
   end

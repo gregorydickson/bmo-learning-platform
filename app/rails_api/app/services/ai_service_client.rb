@@ -13,7 +13,10 @@ class AiServiceClient
         topic: topic,
         learner_id: learner_id
       }.to_json,
-      headers: { 'Content-Type' => 'application/json' }
+      headers: { 
+        'Content-Type' => 'application/json',
+        'X-API-Key' => ENV.fetch('AI_SERVICE_API_KEY', 'dev_key')
+      }
     )
 
     handle_response(response)
@@ -23,7 +26,10 @@ class AiServiceClient
     response = self.class.post(
       '/api/v1/validate-safety',
       body: { content: content }.to_json,
-      headers: { 'Content-Type' => 'application/json' }
+      headers: { 
+        'Content-Type' => 'application/json',
+        'X-API-Key' => ENV.fetch('AI_SERVICE_API_KEY', 'dev_key')
+      }
     )
 
     handle_response(response)

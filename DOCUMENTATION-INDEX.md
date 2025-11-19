@@ -8,7 +8,7 @@
 ## Start Here
 
 ### Quick Overview (5 minutes)
-1. **[DEPLOYMENT-SUMMARY.md](DEPLOYMENT-SUMMARY.md)** (369 lines)
+1. **[docs/deployment/DEPLOYMENT-SUMMARY.md](docs/deployment/DEPLOYMENT-SUMMARY.md)** (369 lines)
    - Quick facts and key metrics
    - Architecture overview
    - Cost breakdown
@@ -24,7 +24,7 @@
    - LangChain patterns demonstrated
 
 ### Step-by-Step Deployment (AWS us-east-2)
-3. **[AWS-DEPLOYMENT-GUIDE.md](AWS-DEPLOYMENT-GUIDE.md)** (225 lines)
+3. **[docs/deployment/AWS-DEPLOYMENT-GUIDE.md](docs/deployment/AWS-DEPLOYMENT-GUIDE.md)** (225 lines)
    - Prerequisites and AWS setup
    - Phase-by-phase deployment
    - Infrastructure, databases, services
@@ -40,11 +40,11 @@
 #### For Architects
 - [CODEBASE-OVERVIEW.md](CODEBASE-OVERVIEW.md) - Complete system design
 - [docs/architecture/overview.md](docs/architecture/overview.md) - Detailed architecture patterns
-- [IMPLEMENTATION-COMPLETE.md](IMPLEMENTATION-COMPLETE.md) - What was built
+- [docs/reports/IMPLEMENTATION-COMPLETE.md](docs/reports/IMPLEMENTATION-COMPLETE.md) - What was built
 
 #### For DevOps/Platform Engineers
-- [AWS-DEPLOYMENT-GUIDE.md](AWS-DEPLOYMENT-GUIDE.md) - Production deployment
-- [DEPLOYMENT-SUMMARY.md](DEPLOYMENT-SUMMARY.md) - Infrastructure overview
+- [docs/deployment/AWS-DEPLOYMENT-GUIDE.md](docs/deployment/AWS-DEPLOYMENT-GUIDE.md) - Production deployment
+- [docs/deployment/DEPLOYMENT-SUMMARY.md](docs/deployment/DEPLOYMENT-SUMMARY.md) - Infrastructure overview
 - [infrastructure/terraform/](infrastructure/terraform/) - IaC code
 
 #### For Backend Engineers
@@ -65,11 +65,11 @@
 ```
 ├── README.md                        -- Project overview and features
 ├── CODEBASE-OVERVIEW.md            -- Complete architecture guide (1,085 lines)
-├── DEPLOYMENT-SUMMARY.md           -- Quick deployment reference (369 lines)
-├── AWS-DEPLOYMENT-GUIDE.md         -- Step-by-step AWS deployment (225 lines)
+├── docs/deployment/DEPLOYMENT-SUMMARY.md           -- Quick deployment reference (369 lines)
+├── docs/deployment/AWS-DEPLOYMENT-GUIDE.md         -- Step-by-step AWS deployment (225 lines)
 ├── DOCUMENTATION-INDEX.md          -- This file
-├── IMPLEMENTATION-COMPLETE.md      -- Phases 2-6 completion status
-├── PHASE1-STATUS.md                -- Phase 1 details
+├── docs/reports/IMPLEMENTATION-COMPLETE.md      -- Phases 2-6 completion status
+├── docs/reports/PHASE1-STATUS.md                -- Phase 1 details
 ├── .env.example                    -- Environment variables template
 └── docker-compose.yml              -- Local development orchestration
 ```
@@ -187,13 +187,13 @@ scripts/
 4. Access: http://localhost:3000 and http://localhost:8000/docs
 
 ### Path 2: AWS Production (Terraform + ECS)
-1. Read: [DEPLOYMENT-SUMMARY.md](DEPLOYMENT-SUMMARY.md) (5 min overview)
-2. Follow: [AWS-DEPLOYMENT-GUIDE.md](AWS-DEPLOYMENT-GUIDE.md) (step-by-step)
+1. Read: [docs/deployment/DEPLOYMENT-SUMMARY.md](docs/deployment/DEPLOYMENT-SUMMARY.md) (5 min overview)
+2. Follow: [docs/deployment/AWS-DEPLOYMENT-GUIDE.md](docs/deployment/AWS-DEPLOYMENT-GUIDE.md) (step-by-step)
 3. Reference: [CODEBASE-OVERVIEW.md](CODEBASE-OVERVIEW.md) Section 8 (infrastructure details)
 4. Monitor: CloudWatch dashboards
 
 ### Path 3: Understanding the Architecture
-1. Start: [DEPLOYMENT-SUMMARY.md](DEPLOYMENT-SUMMARY.md) "Architecture Overview"
+1. Start: [docs/deployment/DEPLOYMENT-SUMMARY.md](docs/deployment/DEPLOYMENT-SUMMARY.md) "Architecture Overview"
 2. Deep dive: [CODEBASE-OVERVIEW.md](CODEBASE-OVERVIEW.md) Sections 1-3
 3. Components: Sections 3.1-3.3 (services breakdown)
 4. Patterns: Section 13 (LangChain patterns)
@@ -262,7 +262,7 @@ terraform apply
 - Section 16: Deployment Checklist
 - Section 17: Support & Documentation
 
-### DEPLOYMENT-SUMMARY.md (369 lines)
+### docs/deployment/DEPLOYMENT-SUMMARY.md (369 lines)
 - Quick facts table
 - Architecture overview
 - Production stack details
@@ -276,7 +276,7 @@ terraform apply
 - Comprehensive checklists
 - Next steps
 
-### AWS-DEPLOYMENT-GUIDE.md (225 lines)
+### docs/deployment/AWS-DEPLOYMENT-GUIDE.md (225 lines)
 - Pre-deployment checklist
 - AWS prerequisites (S3, DynamoDB, ECR, Secrets Manager)
 - Phase 1: Terraform infrastructure
@@ -298,7 +298,7 @@ terraform apply
 ### For Specific Questions
 
 **Architecture**: See CODEBASE-OVERVIEW.md
-**Deployment**: See AWS-DEPLOYMENT-GUIDE.md
+**Deployment**: See docs/deployment/AWS-DEPLOYMENT-GUIDE.md
 **Services**: See app/*/README.md
 **Security**: See docs/security/SECURITY.md
 **Workplans**: See docs/workplans/00-MASTER-WORKPLAN.md
@@ -334,8 +334,8 @@ All 6 phases complete and production-ready:
 |----------|----------|------|---------|
 | This index | `/DOCUMENTATION-INDEX.md` | 2 KB | Navigation guide |
 | Architecture | `/CODEBASE-OVERVIEW.md` | 31 KB | Complete reference |
-| Deployment | `/DEPLOYMENT-SUMMARY.md` | 9 KB | Quick overview |
-| AWS Guide | `/AWS-DEPLOYMENT-GUIDE.md` | 5 KB | Step-by-step |
+| Deployment | `/docs/deployment/DEPLOYMENT-SUMMARY.md` | 9 KB | Quick overview |
+| AWS Guide | `/docs/deployment/AWS-DEPLOYMENT-GUIDE.md` | 5 KB | Step-by-step |
 | Architecture Details | `/docs/architecture/overview.md` | - | System design |
 | Security | `/docs/security/SECURITY.md` | - | Policies |
 | Workplans | `/docs/workplans/` | - | Implementation phases |
@@ -347,4 +347,4 @@ All 6 phases complete and production-ready:
 **Last Updated**: 2025-11-16
 **Version**: 1.0.0 (Complete)
 
-Start with [DEPLOYMENT-SUMMARY.md](DEPLOYMENT-SUMMARY.md) for a quick overview, then refer to [CODEBASE-OVERVIEW.md](CODEBASE-OVERVIEW.md) for detailed architecture.
+Start with [docs/deployment/DEPLOYMENT-SUMMARY.md](docs/deployment/DEPLOYMENT-SUMMARY.md) for a quick overview, then refer to [CODEBASE-OVERVIEW.md](CODEBASE-OVERVIEW.md) for detailed architecture.

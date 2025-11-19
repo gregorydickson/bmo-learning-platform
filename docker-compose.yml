@@ -63,10 +63,12 @@ services:
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/bmo_learning_dev
       - REDIS_URL=redis://redis:6379/0
       - AI_SERVICE_URL=http://ai_service:8000
+      - PORT=3001
+      - WEB_CONCURRENCY=0
     env_file:
       - .env
     ports:
-      - "3000:3000"
+      - "3001:3001"
     volumes:
       - ./app/rails_api:/app
       - rails_bundle:/usr/local/bundle
@@ -85,11 +87,12 @@ services:
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/bmo_learning_dev
       - REDIS_URL=redis://redis:6379/0
+      - DISABLE_SPRING=1
     env_file:
       - .env
     volumes:
       - ./app/rails_api:/app
-      - rails_bundle:/usr/local/bundle
+      - sidekiq_bundle:/usr/local/bundle
     depends_on:
       postgres:
         condition: service_healthy
@@ -102,3 +105,8 @@ volumes:
   redis_data:
   ai_service_cache:
   rails_bundle:
+  sidekiq_bundle:
+
+networks:
+  default:
+    name: bmo_network

@@ -51,8 +51,13 @@ class TestSettings:
         assert settings.twilio_auth_token is None
         assert settings.slack_bot_token is None
 
-    def test_settings_required_fields_missing(self):
+    def test_settings_required_fields_missing(self, monkeypatch):
         """Test that missing required fields raise validation error."""
+        # Explicitly remove required environment variables
+        monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+        monkeypatch.delenv("DATABASE_URL", raising=False)
+        monkeypatch.delenv("REDIS_URL", raising=False)
+
         with pytest.raises((ValueError, Exception)):
             Settings()
 
@@ -105,10 +110,12 @@ class TestSettings:
         monkeypatch.setenv("OPENAI_API_KEY", "sk-test-key")
         monkeypatch.setenv("DATABASE_URL", "postgresql://localhost/test")
         monkeypatch.setenv("REDIS_URL", "redis://localhost:6379/0")
+        # Ensure AWS_REGION is not set to test the default
+        monkeypatch.delenv("AWS_REGION", raising=False)
 
         settings = Settings()
 
-        assert settings.aws_region == "us-east-1"
+        assert settings.aws_region == "us-east-2"  # Matches terraform production region
 
     def test_python_env_default(self, monkeypatch):
         """Test Python environment default."""

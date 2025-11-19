@@ -551,3 +551,4 @@ pre-commit install
 ---
 
 **Last Updated**: 2025-11-16
+- This is a demo applicationi and as such will only have a production environment.

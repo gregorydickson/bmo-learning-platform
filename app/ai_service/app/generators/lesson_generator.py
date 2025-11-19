@@ -109,7 +109,14 @@ class LessonGenerator:
 
         Returns:
             Lesson content dictionary
+
+        Raises:
+            ValueError: If topic is empty or invalid
         """
+        # Validate input
+        if not topic or not topic.strip():
+            raise ValueError("Topic cannot be empty")
+
         logger.info("Generating lesson", topic=topic, learner_id=learner_id)
 
         chain = self.create_lesson_chain()

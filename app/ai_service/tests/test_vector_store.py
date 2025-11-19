@@ -13,7 +13,7 @@ class TestVectorStoreManager:
         assert manager is not None
 
     @patch("chromadb.Client")
-    @patch("langchain_community.vectorstores.Chroma")
+    @patch("app.ingestion.vector_store.Chroma")  # Patch at module level
     def test_create_vector_store(self, mock_chroma, mock_client):
         """Test vector store creation with documents."""
         # Setup mocks
@@ -54,7 +54,7 @@ class TestVectorStoreManager:
         assert result is not None
 
     @patch("chromadb.Client")
-    @patch("langchain_community.vectorstores.Chroma")
+    @patch("app.ingestion.vector_store.Chroma")  # Patch at module level
     def test_load_vector_store_not_exists(self, mock_chroma, mock_client):
         """Test loading vector store that doesn't exist."""
         mock_chroma.side_effect = Exception("Collection not found")
@@ -98,7 +98,7 @@ class TestVectorStoreManager:
             assert call_kwargs["search_kwargs"]["k"] == 5
 
     @patch("chromadb.Client")
-    @patch("langchain_community.vectorstores.Chroma")
+    @patch("app.ingestion.vector_store.Chroma")  # Patch at module level
     def test_similarity_search(self, mock_chroma, mock_client):
         """Test similarity search functionality."""
         mock_store = MagicMock()
@@ -158,7 +158,7 @@ class TestVectorStoreManager:
             assert call_kwargs["collection_name"] == "test_collection"
 
     @patch("chromadb.Client")
-    @patch("langchain_community.vectorstores.Chroma")
+    @patch("app.ingestion.vector_store.Chroma")  # Patch at module level
     def test_add_documents(self, mock_chroma, mock_client):
         """Test adding documents to existing vector store."""
         mock_store = MagicMock()

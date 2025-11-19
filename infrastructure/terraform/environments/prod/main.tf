@@ -124,6 +124,13 @@ variable "acm_certificate_arn" {
   default     = null
 }
 
+variable "ai_service_api_key" {
+  description = "API Key for AI Service"
+  type        = string
+  sensitive   = true
+  default     = "change_me_in_prod"
+}
+
 # VPC Module
 module "vpc" {
   source = "../../modules/vpc"
@@ -263,6 +270,10 @@ module "ecs_services" {
   ai_service_memory = var.ai_service_memory
   rails_api_cpu     = var.rails_api_cpu
   rails_api_memory  = var.rails_api_memory
+
+  # Service Communication
+  ai_service_url     = "http://${module.alb.alb_dns_name}"
+  ai_service_api_key = var.ai_service_api_key
 
   depends_on = [module.alb, module.secrets]
 }

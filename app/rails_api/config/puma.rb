@@ -1,8 +1,5 @@
 # Puma configuration file
 
-# Specifies the `port` that Puma will listen on to receive requests
-port ENV.fetch("PORT", 3000)
-
 # Specifies the `environment` that Puma will run in
 environment ENV.fetch("RAILS_ENV", "development")
 
@@ -18,14 +15,11 @@ plugin :tmp_restart
 # Specify the PID file
 pidfile ENV.fetch("PIDFILE", "tmp/pids/server.pid")
 
-# Daemonize the server
-# daemonize false
-
 # Number of threads
 threads_count = ENV.fetch("RAILS_MAX_THREADS", 5)
 threads threads_count, threads_count
 
-# Bind to specific address
+# Bind to specific address (only one bind statement!)
 bind "tcp://0.0.0.0:#{ENV.fetch('PORT', 3000)}"
 
 # Health check endpoint

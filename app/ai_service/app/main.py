@@ -41,8 +41,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include API routes
-app.include_router(router, prefix="/api/v1")
+from app.api.deps import get_api_key
+from fastapi import Depends
+
+# Include API routes with authentication
+app.include_router(
+    router, 
+    prefix="/api/v1",
+    dependencies=[Depends(get_api_key)]
+)
 
 
 @app.get("/")

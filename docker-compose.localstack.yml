@@ -1,0 +1,136 @@
+version: '3.8'
+
+# LocalStack Docker Compose Configuration
+# Extends the main docker-compose.yml for AWS service testing
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.localstack.yml up
+
+services:
+  # LocalStack - AWS Cloud Service Emulator
+  # Community Edition includes: S3, DynamoDB, Lambda, SNS, SQS, Secrets Manager, IAM
+  localstack:
+    image: localstack/localstack:latest
+    container_name: bmo_localstack
+    ports:
+      - "4566:4566"            # LocalStack Gateway (all services)
+      - "4510-4559:4510-4559"  # External service port range
+    environment:
+      # Core Configuration
+      - SERVICES=s3,secretsmanager,iam
+      - DEBUG=1
+      - PERSISTENCE=0  # Set to 1 for data persistence across restarts
+      - LAMBDA_EXECUTOR=docker
+      - DOCKER_HOST=unix:///var/run/docker.sock
+
+      # AWS Configuration
+      - AWS_DEFAULT_REGION=us-east-2
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+
+      # LocalStack Configuration
+      - LOCALSTACK_HOST=localstack:4566
+      - EDGE_PORT=4566
+      - DATA_DIR=/tmp/localstack/data
+
+      # Feature Flags
+      - SKIP_SSL_CERT_DOWNLOAD=1
+      - DISABLE_CORS_CHECKS=1
+
+    volumes:
+      # Mount Docker socket for Lambda execution
+      - "/var/run/docker.sock:/var/run/docker.sock"
+
+      # Mount initialization scripts
+      - "./scripts/localstack-init.sh:/etc/localstack/init/ready.d/init.sh"
+
+      # Optional: Persistence volume (if PERSISTENCE=1)
+      # - "./data/localstack:/tmp/localstack/data"
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # Update AI Service to use LocalStack
+  ai_service:
+    environment:
+      # LocalStack AWS Endpoint Override
+      - AWS_ENDPOINT_URL=http://localstack:4566
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_REGION=us-east-2
+
+      # Feature Flags
+      - USE_LOCALSTACK=true
+
+      # S3 Bucket Configuration
+      - S3_DOCUMENTS_BUCKET=bmo-learning-test-documents
+      - S3_BACKUPS_BUCKET=bmo-learning-test-backups
+
+    depends_on:
+      localstack:
+        condition: service_healthy
+
+  # Update Rails API to use LocalStack
+  rails_api:
+    environment:
+      # LocalStack AWS Endpoint Override
+      - AWS_ENDPOINT_URL=http://localstack:4566
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_REGION=us-east-2
+
+      # Feature Flags
+      - USE_LOCALSTACK=true
+
+      # S3 Bucket Configuration
+      - S3_DOCUMENTS_BUCKET=bmo-learning-test-documents
+      - S3_BACKUPS_BUCKET=bmo-learning-test-backups
+
+    depends_on:
+      localstack:
+        condition: service_healthy
+
+  # Update Sidekiq to use LocalStack
+  sidekiq:
+    environment:
+      # LocalStack AWS Endpoint Override
+      - AWS_ENDPOINT_URL=http://localstack:4566
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_REGION=us-east-2
+
+      # Feature Flags
+      - USE_LOCALSTACK=true
+
+      # S3 Bucket Configuration
+      - S3_DOCUMENTS_BUCKET=bmo-learning-test-documents
+      - S3_BACKUPS_BUCKET=bmo-learning-test-backups
+
+    depends_on:
+      localstack:
+        condition: service_healthy
+
+# Usage Instructions:
+#
+# 1. Start all services with LocalStack:
+#    docker-compose -f docker-compose.yml -f docker-compose.localstack.yml up
+#
+# 2. Start in background:
+#    docker-compose -f docker-compose.yml -f docker-compose.localstack.yml up -d
+#
+# 3. View LocalStack logs:
+#    docker-compose -f docker-compose.localstack.yml logs -f localstack
+#
+# 4. Check LocalStack health:
+#    curl http://localhost:4566/_localstack/health
+#
+# 5. List S3 buckets (using awslocal CLI):
+#    awslocal s3 ls
+#
+# 6. Stop services:
+#    docker-compose -f docker-compose.yml -f docker-compose.localstack.yml down
+#
+# 7. Clean up volumes:
+#    docker-compose -f docker-compose.yml -f docker-compose.localstack.yml down -v
