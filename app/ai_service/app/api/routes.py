@@ -114,7 +114,7 @@ async def generate_lesson(request: LessonRequest):
             lesson=lesson,
             metadata={
                 "generated_at": "2025-11-15T00:00:00Z",
-                "model": settings.openai_model,
+                "model": settings.anthropic_model,
                 "rag_enabled": retriever is not None
             },
             safety_check=safety_check

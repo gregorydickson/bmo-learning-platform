@@ -8,6 +8,9 @@ from app.main import app
 
 client = TestClient(app)
 
+# API key headers for authenticated endpoints
+API_HEADERS = {"X-API-Key": "dev_key"}
+
 
 class TestHealthEndpoints:
     """Test health check endpoints."""
@@ -88,7 +91,7 @@ class TestLessonGenerationEndpoint:
                 "learner_id": "learner_123",
                 "difficulty": "medium"
             }
-        )
+        , headers=API_HEADERS)
 
         assert response.status_code == 200
         data = response.json()
@@ -132,7 +135,7 @@ class TestLessonGenerationEndpoint:
                 "topic": "Test Topic",
                 "learner_id": "learner_123"
             }
-        )
+        , headers=API_HEADERS)
 
         assert response.status_code == 200
         data = response.json()
@@ -145,7 +148,7 @@ class TestLessonGenerationEndpoint:
             json={
                 "learner_id": "learner_123"
             }
-        )
+        , headers=API_HEADERS)
 
         assert response.status_code == 422  # Validation error
 
@@ -157,7 +160,7 @@ class TestLessonGenerationEndpoint:
                 "topic": "",
                 "learner_id": "learner_123"
             }
-        )
+        , headers=API_HEADERS)
 
         # Empty topic validation happens in LessonGenerator, returns 500
         assert response.status_code == 500
@@ -203,7 +206,7 @@ class TestLessonGenerationEndpoint:
                 "topic": "Test",
                 "learner_id": "learner_123"
             }
-        )
+        , headers=API_HEADERS)
 
         assert response.status_code == 200  # Still returns but with sanitized content
         data = response.json()
@@ -230,7 +233,8 @@ class TestLessonGenerationEndpoint:
             json={
                 "topic": "Test",
                 "learner_id": "learner_123"
-            }
+            },
+            headers={"X-API-Key": "dev_key"}
         )
 
         assert response.status_code == 500
@@ -265,7 +269,7 @@ class TestSafetyValidationEndpoint:
         response = client.post(
             "/api/v1/validate-safety",
             params={"content": "This is clean educational content"}
-        )
+        , headers=API_HEADERS)
 
         assert response.status_code == 200
         data = response.json()
@@ -285,7 +289,7 @@ class TestSafetyValidationEndpoint:
         response = client.post(
             "/api/v1/validate-safety",
             params={"content": "My SSN is 123-45-6789"}
-        )
+        , headers=API_HEADERS)
 
         assert response.status_code == 200
         data = response.json()
@@ -305,7 +309,7 @@ class TestDocumentIngestionEndpoint:
         response = client.post(
             "/api/v1/ingest-documents",
             params={"directory": "/path/to/documents"}
-        )
+        , headers=API_HEADERS)
 
         assert response.status_code == 200
         data = response.json()
@@ -370,7 +374,7 @@ class TestResponseSchemas:
         response = client.post(
             "/api/v1/generate-lesson",
             json={"topic": "Test", "learner_id": "123"}
-        )
+        , headers=API_HEADERS)
 
         data = response.json()
 
@@ -436,7 +440,7 @@ class TestDocumentProcessingEndpoint:
                 "filename": "test.pdf",
                 "category": "training"
             }
-        )
+        , headers=API_HEADERS)
 
         assert response.status_code == 200
         data = response.json()
@@ -483,7 +487,7 @@ class TestDocumentProcessingEndpoint:
                 "content_type": "text/plain",
                 "filename": "test.txt"
             }
-        )
+        , headers=API_HEADERS)
 
         assert response.status_code == 200
         data = response.json()
@@ -512,7 +516,7 @@ class TestDocumentProcessingEndpoint:
                 "content_type": "application/pdf",
                 "filename": "nonexistent.pdf"
             }
-        )
+        , headers=API_HEADERS)
 
         assert response.status_code == 200
         data = response.json()
@@ -538,7 +542,7 @@ class TestDocumentProcessingEndpoint:
                 "content_type": "application/pdf",
                 "filename": "test.pdf"
             }
-        )
+        , headers=API_HEADERS)
 
         assert response.status_code == 200
         data = response.json()
@@ -561,7 +565,8 @@ class TestDocumentProcessingEndpoint:
                 "s3_key": "documents/corrupt.pdf",
                 "content_type": "application/pdf",
                 "filename": "corrupt.pdf"
-            }
+            },
+            headers={"X-API-Key": "dev_key"}
         )
 
         assert response.status_code == 500
@@ -577,7 +582,7 @@ class TestDocumentProcessingEndpoint:
                 "document_id": 303
                 # Missing required fields: s3_bucket, s3_key, etc.
             }
-        )
+        , headers=API_HEADERS)
 
         assert response.status_code == 422  # Validation error
 
@@ -657,7 +662,7 @@ class TestDocumentProcessingEndpoint:
                 "content_type": "",
                 "filename": "readme.txt"
             }
-        )
+        , headers=API_HEADERS)
 
         assert response.status_code == 200
         data = response.json()
@@ -700,7 +705,7 @@ class TestDocumentProcessingEndpoint:
                 "content_type": "application/pdf",
                 "filename": "schema-test.pdf"
             }
-        )
+        , headers=API_HEADERS)
 
         data = response.json()
 

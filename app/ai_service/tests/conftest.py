@@ -110,6 +110,9 @@ def mock_openai_client():
         yield client
 
 
+
+
+
 @pytest.fixture
 def mock_redis():
     """Mock Redis client for testing."""
@@ -223,6 +226,8 @@ def mock_settings():
 
     with patch("app.config.settings.settings") as mock:
         mock.openai_api_key = "sk-test-key"
+        mock.anthropic_api_key = "sk-ant-test-key"
+        mock.anthropic_model = "claude-haiku-4-5-20251001"
         mock.openai_model = "gpt-4-turbo-preview"
         mock.openai_embedding_model = "text-embedding-3-small"
         mock.database_url = "postgresql://localhost:5432/test_db"
@@ -319,6 +324,7 @@ def reset_environment():
     # This allows tests to verify default values and optional field behavior
     required_test_defaults = {
         "OPENAI_API_KEY": "sk-test-key-for-testing-only",
+        "ANTHROPIC_API_KEY": "sk-ant-test-key-for-testing-only",
         "DATABASE_URL": "postgresql://localhost:5432/test_db",
         "REDIS_URL": "redis://localhost:6379/0",
     }
@@ -486,6 +492,30 @@ def mock_chroma_enhanced():
         ]
 
         yield store
+
+
+# ===================================================
+# AWS Credentials Mock (moto) for Unit Tests
+# ===================================================
+
+@pytest.fixture(scope="session", autouse=True)
+def aws_credentials():
+    """
+    Mocked AWS credentials for moto testing.
+
+    This is a session-scoped fixture that sets AWS environment variables
+    to dummy values so that boto3 clients don't try to use real credentials.
+
+    Auto-use means this applies to ALL tests (both unit and integration).
+    Integration tests will override these with LocalStack-specific values.
+    """
+    import os
+
+    os.environ["AWS_ACCESS_KEY_ID"] = "testing"
+    os.environ["AWS_SECRET_ACCESS_KEY"] = "testing"
+    os.environ["AWS_SECURITY_TOKEN"] = "testing"
+    os.environ["AWS_SESSION_TOKEN"] = "testing"
+    os.environ["AWS_DEFAULT_REGION"] = "us-east-2"
 
 
 # ===================================================

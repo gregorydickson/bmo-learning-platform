@@ -9,25 +9,25 @@ class TestSettings:
 
     def test_settings_initialization(self, monkeypatch):
         """Test settings can be initialized with environment variables."""
-        monkeypatch.setenv("OPENAI_API_KEY", "sk-test-key")
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test-key")
         monkeypatch.setenv("DATABASE_URL", "postgresql://localhost/test")
         monkeypatch.setenv("REDIS_URL", "redis://localhost:6379/0")
 
         settings = Settings()
 
-        assert settings.openai_api_key == "sk-test-key"
+        assert settings.anthropic_api_key == "sk-test-key"
         assert settings.database_url == "postgresql://localhost/test"
         assert settings.redis_url == "redis://localhost:6379/0"
 
     def test_settings_defaults(self, monkeypatch):
         """Test default values are set correctly."""
-        monkeypatch.setenv("OPENAI_API_KEY", "sk-test-key")
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test-key")
         monkeypatch.setenv("DATABASE_URL", "postgresql://localhost/test")
         monkeypatch.setenv("REDIS_URL", "redis://localhost:6379/0")
 
         settings = Settings()
 
-        assert settings.openai_model == "gpt-4-turbo-preview"
+        assert settings.anthropic_model == "claude-haiku-4-5-20251001"
         assert settings.openai_embedding_model == "text-embedding-3-small"
         assert settings.enable_constitutional_ai is True
         assert settings.enable_pii_detection is True
@@ -38,12 +38,14 @@ class TestSettings:
 
     def test_settings_optional_fields(self, monkeypatch):
         """Test optional fields can be None."""
-        monkeypatch.setenv("OPENAI_API_KEY", "sk-test-key")
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test-key")
         monkeypatch.setenv("DATABASE_URL", "postgresql://localhost/test")
         monkeypatch.setenv("REDIS_URL", "redis://localhost:6379/0")
+        monkeypatch.delenv("OPENAI_API_KEY", raising=False)
 
         settings = Settings()
 
+        assert settings.openai_api_key is None
         assert settings.langchain_api_key is None
         assert settings.aws_access_key_id is None
         assert settings.aws_secret_access_key is None
@@ -54,7 +56,7 @@ class TestSettings:
     def test_settings_required_fields_missing(self, monkeypatch):
         """Test that missing required fields raise validation error."""
         # Explicitly remove required environment variables
-        monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
         monkeypatch.delenv("DATABASE_URL", raising=False)
         monkeypatch.delenv("REDIS_URL", raising=False)
 
@@ -63,17 +65,17 @@ class TestSettings:
 
     def test_settings_case_insensitive(self, monkeypatch):
         """Test environment variables are case insensitive."""
-        monkeypatch.setenv("openai_api_key", "sk-test-key")
+        monkeypatch.setenv("anthropic_api_key", "sk-test-key")
         monkeypatch.setenv("database_url", "postgresql://localhost/test")
         monkeypatch.setenv("redis_url", "redis://localhost:6379/0")
 
         settings = Settings()
 
-        assert settings.openai_api_key == "sk-test-key"
+        assert settings.anthropic_api_key == "sk-test-key"
 
     def test_get_settings_cached(self, monkeypatch):
         """Test that get_settings returns cached instance."""
-        monkeypatch.setenv("OPENAI_API_KEY", "sk-test-key-1")
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test-key-1")
         monkeypatch.setenv("DATABASE_URL", "postgresql://localhost/test")
         monkeypatch.setenv("REDIS_URL", "redis://localhost:6379/0")
 
@@ -85,7 +87,7 @@ class TestSettings:
 
     def test_chroma_persist_directory_default(self, monkeypatch):
         """Test Chroma persistence directory default."""
-        monkeypatch.setenv("OPENAI_API_KEY", "sk-test-key")
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test-key")
         monkeypatch.setenv("DATABASE_URL", "postgresql://localhost/test")
         monkeypatch.setenv("REDIS_URL", "redis://localhost:6379/0")
 
@@ -96,7 +98,7 @@ class TestSettings:
 
     def test_allowed_origins_default(self, monkeypatch):
         """Test CORS allowed origins default."""
-        monkeypatch.setenv("OPENAI_API_KEY", "sk-test-key")
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test-key")
         monkeypatch.setenv("DATABASE_URL", "postgresql://localhost/test")
         monkeypatch.setenv("REDIS_URL", "redis://localhost:6379/0")
 
@@ -107,7 +109,7 @@ class TestSettings:
 
     def test_aws_region_default(self, monkeypatch):
         """Test AWS region default value."""
-        monkeypatch.setenv("OPENAI_API_KEY", "sk-test-key")
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test-key")
         monkeypatch.setenv("DATABASE_URL", "postgresql://localhost/test")
         monkeypatch.setenv("REDIS_URL", "redis://localhost:6379/0")
         # Ensure AWS_REGION is not set to test the default
@@ -119,7 +121,7 @@ class TestSettings:
 
     def test_python_env_default(self, monkeypatch):
         """Test Python environment default."""
-        monkeypatch.setenv("OPENAI_API_KEY", "sk-test-key")
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test-key")
         monkeypatch.setenv("DATABASE_URL", "postgresql://localhost/test")
         monkeypatch.setenv("REDIS_URL", "redis://localhost:6379/0")
 
@@ -129,7 +131,7 @@ class TestSettings:
 
     def test_log_level_default(self, monkeypatch):
         """Test log level default."""
-        monkeypatch.setenv("OPENAI_API_KEY", "sk-test-key")
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test-key")
         monkeypatch.setenv("DATABASE_URL", "postgresql://localhost/test")
         monkeypatch.setenv("REDIS_URL", "redis://localhost:6379/0")
 
@@ -139,22 +141,22 @@ class TestSettings:
 
     def test_settings_can_override_defaults(self, monkeypatch):
         """Test that environment variables override defaults."""
-        monkeypatch.setenv("OPENAI_API_KEY", "sk-test-key")
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test-key")
         monkeypatch.setenv("DATABASE_URL", "postgresql://localhost/test")
         monkeypatch.setenv("REDIS_URL", "redis://localhost:6379/0")
-        monkeypatch.setenv("OPENAI_MODEL", "gpt-4")
+        monkeypatch.setenv("ANTHROPIC_MODEL", "gpt-4")
         monkeypatch.setenv("MAX_TOKENS_PER_LESSON", "1000")
         monkeypatch.setenv("RATE_LIMIT_PER_MINUTE", "120")
 
         settings = Settings()
 
-        assert settings.openai_model == "gpt-4"
+        assert settings.anthropic_model == "gpt-4"
         assert settings.max_tokens_per_lesson == 1000
         assert settings.rate_limit_per_minute == 120
 
     def test_langchain_tracing_disabled_by_default(self, monkeypatch):
         """Test LangChain tracing is disabled by default."""
-        monkeypatch.setenv("OPENAI_API_KEY", "sk-test-key")
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test-key")
         monkeypatch.setenv("DATABASE_URL", "postgresql://localhost/test")
         monkeypatch.setenv("REDIS_URL", "redis://localhost:6379/0")
 

@@ -42,6 +42,7 @@ app.add_middleware(
 )
 
 from app.api.deps import get_api_key
+from app.api.agent_routes import router as agent_router
 from fastapi import Depends
 
 # Include API routes with authentication
@@ -49,6 +50,14 @@ app.include_router(
     router, 
     prefix="/api/v1",
     dependencies=[Depends(get_api_key)]
+)
+
+# Include agent routes with authentication
+app.include_router(
+    agent_router,
+    prefix="/api/v1",
+    dependencies=[Depends(get_api_key)],
+    tags=["agent"]
 )
 
 

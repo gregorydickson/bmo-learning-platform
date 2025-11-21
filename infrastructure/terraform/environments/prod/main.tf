@@ -88,17 +88,8 @@ variable "rails_api_memory" {
   default     = 1024
 }
 
-variable "db_instance_class" {
-  description = "RDS instance class"
-  type        = string
-  default     = "db.t3.medium"
-}
-
-variable "db_allocated_storage" {
-  description = "RDS allocated storage in GB"
-  type        = number
-  default     = 100
-}
+# Aurora Serverless v2 uses ACU (Aurora Capacity Units) instead of instance classes
+# Scaling configuration is set directly in the aurora module call
 
 variable "redis_node_type" {
   description = "ElastiCache Redis node type"
@@ -160,18 +151,16 @@ module "iam" {
   depends_on = [module.secrets]
 }
 
-# RDS Module
-module "rds" {
-  source = "../../modules/rds"
+# Aurora Serverless v2 Module (cost-optimized replacement for RDS)
+module "aurora" {
+  source = "../../modules/aurora_serverless"
 
-  environment         = var.environment
-  vpc_id              = module.vpc.vpc_id
-  private_subnet_ids  = module.vpc.private_subnet_ids
-  security_group_id   = module.security_groups.rds_security_group_id
-  instance_class      = var.db_instance_class
-  allocated_storage   = var.db_allocated_storage
-  multi_az            = true
-  deletion_protection = true
+  environment        = var.environment
+  vpc_id             = module.vpc.vpc_id
+  private_subnet_ids = module.vpc.private_subnet_ids
+  security_group_id  = module.security_groups.rds_security_group_id
+  min_capacity       = 0.5 # Minimum ACU (scales down when idle)
+  max_capacity       = 2   # Maximum ACU (scales up under load)
 }
 
 # ElastiCache Redis Module
@@ -191,11 +180,11 @@ module "secrets" {
   source = "../../modules/secrets"
 
   environment  = var.environment
-  database_url = module.rds.database_url
+  database_url = module.aurora.database_url
   redis_url    = module.elasticache.redis_url
-  db_password  = module.rds.db_password
+  db_password  = module.aurora.db_password
 
-  depends_on = [module.rds, module.elasticache]
+  depends_on = [module.aurora, module.elasticache]
 }
 
 # ECR Module
@@ -241,7 +230,7 @@ module "ecs_services" {
   cluster_id              = module.ecs.cluster_id
   cluster_name            = module.ecs.cluster_name
   vpc_id                  = module.vpc.vpc_id
-  private_subnet_ids      = module.vpc.private_subnet_ids
+  public_subnet_ids       = module.vpc.public_subnet_ids # Changed from private for cost optimization
   security_group_id       = module.security_groups.ecs_tasks_security_group_id
   task_execution_role_arn = module.iam.ecs_task_execution_role_arn
   task_role_arn           = module.iam.ecs_task_role_arn
@@ -256,6 +245,7 @@ module "ecs_services" {
 
   # Secrets
   secret_arns = {
+    anthropic_api_key     = module.secrets.anthropic_api_key_arn
     openai_api_key        = module.secrets.openai_api_key_arn
     database_url          = module.secrets.database_url_arn
     redis_url             = module.secrets.redis_url_arn
@@ -294,9 +284,14 @@ output "alb_dns_name" {
   value       = module.alb.alb_dns_name
 }
 
-output "rds_endpoint" {
-  description = "RDS instance endpoint"
-  value       = module.rds.db_instance_endpoint
+output "aurora_endpoint" {
+  description = "Aurora cluster endpoint (writer)"
+  value       = module.aurora.cluster_endpoint
+}
+
+output "aurora_reader_endpoint" {
+  description = "Aurora cluster reader endpoint"
+  value       = module.aurora.cluster_reader_endpoint
 }
 
 output "redis_endpoint" {
@@ -327,7 +322,7 @@ output "backups_bucket" {
 # Sensitive outputs (for automation only)
 output "database_url" {
   description = "Full database connection URL"
-  value       = module.rds.database_url
+  value       = module.aurora.database_url
   sensitive   = true
 }
 

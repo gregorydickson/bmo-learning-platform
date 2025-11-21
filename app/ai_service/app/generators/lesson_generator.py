@@ -1,5 +1,5 @@
 """Lesson content generation using LangChain LCEL."""
-from langchain_openai import ChatOpenAI
+from langchain_anthropic import ChatAnthropic
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.runnables import RunnablePassthrough
@@ -33,10 +33,10 @@ class LessonGenerator:
         Args:
             retriever: Document retriever for RAG
         """
-        self.llm = ChatOpenAI(
-            model=settings.openai_model,
+        self.llm = ChatAnthropic(
+            model=settings.anthropic_model,
             temperature=0.7,
-            openai_api_key=settings.openai_api_key
+            anthropic_api_key=settings.anthropic_api_key
         )
         self.retriever = retriever
         self.parser = JsonOutputParser(pydantic_object=LessonContent)
@@ -135,10 +135,10 @@ class QuizGenerator:
 
     def __init__(self):
         """Initialize quiz generator."""
-        self.llm = ChatOpenAI(
-            model=settings.openai_model,
+        self.llm = ChatAnthropic(
+            model=settings.anthropic_model,
             temperature=0.8,
-            openai_api_key=settings.openai_api_key
+            anthropic_api_key=settings.anthropic_api_key
         )
 
     def generate_quiz(

@@ -207,14 +207,15 @@ class TestDocumentProcessingPipeline:
         chunks = document_processor.chunk_documents(documents)
 
         # Add to vector store
-        vector_store_manager.add_documents(chunks)
+        vector_store = vector_store_manager.create_vector_store(chunks)
 
         # Assert: Documents processed and embedded
         assert len(chunks) > 0
 
         # Verify documents in vector store
-        results = vector_store_manager.search(
-            query="What is machine learning?",
+        results = vector_store_manager.similarity_search(
+            vector_store,
+            "What is machine learning?",
             k=3
         )
         assert len(results) > 0
@@ -286,7 +287,7 @@ class TestVectorStoreS3Backup:
             Document(page_content="JavaScript is used for web development", metadata={"topic": "javascript"}),
             Document(page_content="SQL is for database queries", metadata={"topic": "sql"})
         ]
-        vector_store_manager.add_documents(documents)
+        vector_store = vector_store_manager.create_vector_store(documents)
 
         # Act: Backup to S3
         backup_key = "backups/vector-store-backup.tar.gz"
@@ -318,7 +319,7 @@ class TestVectorStoreS3Backup:
             Document(page_content="Test document 1", metadata={"id": "1"}),
             Document(page_content="Test document 2", metadata={"id": "2"}),
         ]
-        vector_store_manager.add_documents(original_docs)
+        vector_store = vector_store_manager.create_vector_store(original_docs)
 
         backup_key = "backups/test-restore.tar.gz"
         vector_store_manager.backup_to_s3(
@@ -339,7 +340,8 @@ class TestVectorStoreS3Backup:
         assert result['success'] is True
 
         # Verify documents restored
-        search_results = vector_store_manager.search("Test document", k=5)
+        vector_store = vector_store_manager.load_vector_store()
+        search_results = vector_store_manager.similarity_search(vector_store, "Test document", k=5)
         assert len(search_results) == 2
 
     def test_incremental_backup(
@@ -357,7 +359,7 @@ class TestVectorStoreS3Backup:
         docs_v1 = [
             Document(page_content="Version 1 doc", metadata={"version": "1"})
         ]
-        vector_store_manager.add_documents(docs_v1)
+        vector_store = vector_store_manager.create_vector_store(docs_v1)
         vector_store_manager.backup_to_s3(
             bucket=s3_test_bucket,
             key="backups/v1.tar.gz"
@@ -367,7 +369,7 @@ class TestVectorStoreS3Backup:
         docs_v2 = [
             Document(page_content="Version 2 doc", metadata={"version": "2"})
         ]
-        vector_store_manager.add_documents(docs_v2)
+        vector_store_manager.add_documents(vector_store, docs_v2)
 
         # Act: Incremental backup
         result = vector_store_manager.backup_to_s3(
@@ -446,7 +448,9 @@ def document_processor():
 def vector_store_manager(temp_chroma_dir):
     """Vector store manager for testing."""
     from app.ingestion.vector_store import VectorStoreManager
-    return VectorStoreManager(persist_directory=temp_chroma_dir)
+    manager = VectorStoreManager()
+    manager.persist_directory = temp_chroma_dir
+    return manager
 
 
 @pytest.fixture

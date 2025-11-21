@@ -10,10 +10,12 @@ logger = structlog.get_logger(__name__)
 class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
 
-    # OpenAI Configuration
-    openai_api_key: str
-    openai_model: str = "gpt-4-turbo-preview"
+    # Anthropic Configuration
+    anthropic_api_key: str
+    anthropic_model: str = "claude-haiku-4-5-20251001"
     ai_service_api_key: str = "dev_key"  # Default for dev, override in prod
+    # Note: Using OpenAI embeddings for RAG (Anthropic doesn't provide embedding models)
+    openai_api_key: str | None = None  # Optional: only needed if using OpenAI embeddings
     openai_embedding_model: str = "text-embedding-3-small"
 
     # Database Configuration
@@ -42,6 +44,12 @@ class Settings(BaseSettings):
 
     # CORS
     allowed_origins: list[str] = ["http://localhost:3000", "http://localhost:3001"]
+
+    # Agent Configuration
+    agent_temperature: float = 0.3
+    agent_max_iterations: int = 5
+    enable_agent_memory: bool = True
+    memory_window_size: int = 10
 
     # AWS Configuration (optional for local development)
     aws_access_key_id: str | None = None

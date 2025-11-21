@@ -31,7 +31,7 @@ resource "aws_s3_bucket_versioning" "documents" {
   }
 }
 
-resource "aws_s3_bucket_encryption" "documents" {
+resource "aws_s3_bucket_server_side_encryption_configuration" "documents" {
   bucket = aws_s3_bucket.documents.id
 
   rule {
@@ -91,7 +91,7 @@ resource "aws_s3_bucket_versioning" "backups" {
   }
 }
 
-resource "aws_s3_bucket_encryption" "backups" {
+resource "aws_s3_bucket_server_side_encryption_configuration" "backups" {
   bucket = aws_s3_bucket.backups.id
 
   rule {
@@ -117,13 +117,15 @@ resource "aws_s3_bucket_lifecycle_configuration" "backups" {
     id     = "transition-to-glacier"
     status = "Enabled"
 
+    filter {}
+
     transition {
       days          = 30
       storage_class = "GLACIER"
     }
 
     transition {
-      days          = 90
+      days          = 120  # Must be 90 days after GLACIER transition
       storage_class = "DEEP_ARCHIVE"
     }
 

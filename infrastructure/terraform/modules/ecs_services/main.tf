@@ -28,8 +28,8 @@ variable "vpc_id" {
   type        = string
 }
 
-variable "private_subnet_ids" {
-  description = "Private subnet IDs for ECS tasks"
+variable "public_subnet_ids" {
+  description = "Public subnet IDs for ECS tasks (cost optimization: no NAT Gateway needed)"
   type        = list(string)
 }
 
@@ -71,6 +71,7 @@ variable "rails_api_target_group_arn" {
 variable "secret_arns" {
   description = "Map of secret ARNs"
   type = object({
+    anthropic_api_key     = string
     openai_api_key        = string
     database_url          = string
     redis_url             = string
@@ -84,37 +85,37 @@ variable "secret_arns" {
 variable "ai_service_cpu" {
   description = "CPU units for AI service"
   type        = number
-  default     = 1024
+  default     = 256 # Cost-optimized for demo
 }
 
 variable "ai_service_memory" {
   description = "Memory (MB) for AI service"
   type        = number
-  default     = 2048
+  default     = 512 # Cost-optimized for demo
 }
 
 variable "rails_api_cpu" {
   description = "CPU units for Rails API"
   type        = number
-  default     = 512
+  default     = 128 # Cost-optimized for demo (minimum for Fargate)
 }
 
 variable "rails_api_memory" {
   description = "Memory (MB) for Rails API"
   type        = number
-  default     = 1024
+  default     = 256 # Cost-optimized for demo (minimum for Fargate)
 }
 
 variable "sidekiq_cpu" {
   description = "CPU units for Sidekiq"
   type        = number
-  default     = 512
+  default     = 128 # Cost-optimized for demo (minimum for Fargate)
 }
 
 variable "sidekiq_memory" {
   description = "Memory (MB) for Sidekiq"
   type        = number
-  default     = 1024
+  default     = 256 # Cost-optimized for demo (minimum for Fargate)
 }
 
 variable "ai_service_url" {
@@ -195,8 +196,12 @@ resource "aws_ecs_task_definition" "ai_service" {
           value = "us-east-2"
         },
         {
-          name  = "OPENAI_MODEL"
-          value = "gpt-4-turbo-preview"
+          name  = "ANTHROPIC_MODEL"
+          value = "claude-haiku-4-5-20251001"
+        },
+        {
+          name  = "OPENAI_EMBEDDING_MODEL"
+          value = "text-embedding-3-small"
         },
         {
           name  = "AI_SERVICE_API_KEY"
@@ -205,6 +210,10 @@ resource "aws_ecs_task_definition" "ai_service" {
       ]
 
       secrets = [
+        {
+          name      = "ANTHROPIC_API_KEY"
+          valueFrom = var.secret_arns.anthropic_api_key
+        },
         {
           name      = "OPENAI_API_KEY"
           valueFrom = var.secret_arns.openai_api_key
@@ -427,13 +436,13 @@ resource "aws_ecs_service" "ai_service" {
   name            = "bmo-learning-${var.environment}-ai-service"
   cluster         = var.cluster_id
   task_definition = aws_ecs_task_definition.ai_service.arn
-  desired_count   = var.environment == "prod" ? 2 : 1
+  desired_count   = 1 # Fixed to 1 for demo/cost savings
   launch_type     = "FARGATE"
 
   network_configuration {
-    subnets          = var.private_subnet_ids
+    subnets          = var.public_subnet_ids
     security_groups  = [var.security_group_id]
-    assign_public_ip = false
+    assign_public_ip = true # Required for public subnets (no NAT Gateway)
   }
 
   load_balancer {
@@ -442,10 +451,8 @@ resource "aws_ecs_service" "ai_service" {
     container_port   = 8000
   }
 
-  deployment_configuration {
-    maximum_percent         = 200
-    minimum_healthy_percent = 100
-  }
+  deployment_maximum_percent         = 200
+  deployment_minimum_healthy_percent = 100
 
   enable_execute_command = true
 
@@ -462,13 +469,13 @@ resource "aws_ecs_service" "rails_api" {
   name            = "bmo-learning-${var.environment}-rails-api"
   cluster         = var.cluster_id
   task_definition = aws_ecs_task_definition.rails_api.arn
-  desired_count   = var.environment == "prod" ? 2 : 1
+  desired_count   = 1 # Fixed to 1 for demo/cost savings
   launch_type     = "FARGATE"
 
   network_configuration {
-    subnets          = var.private_subnet_ids
+    subnets          = var.public_subnet_ids
     security_groups  = [var.security_group_id]
-    assign_public_ip = false
+    assign_public_ip = true # Required for public subnets (no NAT Gateway)
   }
 
   load_balancer {
@@ -477,10 +484,8 @@ resource "aws_ecs_service" "rails_api" {
     container_port   = 3000
   }
 
-  deployment_configuration {
-    maximum_percent         = 200
-    minimum_healthy_percent = 100
-  }
+  deployment_maximum_percent         = 200
+  deployment_minimum_healthy_percent = 100
 
   enable_execute_command = true
 
@@ -497,19 +502,17 @@ resource "aws_ecs_service" "sidekiq" {
   name            = "bmo-learning-${var.environment}-sidekiq"
   cluster         = var.cluster_id
   task_definition = aws_ecs_task_definition.sidekiq.arn
-  desired_count   = var.environment == "prod" ? 2 : 1
+  desired_count   = 1 # Fixed to 1 for demo/cost savings
   launch_type     = "FARGATE"
 
   network_configuration {
-    subnets          = var.private_subnet_ids
+    subnets          = var.public_subnet_ids
     security_groups  = [var.security_group_id]
-    assign_public_ip = false
+    assign_public_ip = true # Required for public subnets (no NAT Gateway)
   }
 
-  deployment_configuration {
-    maximum_percent         = 200
-    minimum_healthy_percent = 50
-  }
+  deployment_maximum_percent         = 200
+  deployment_minimum_healthy_percent = 50
 
   enable_execute_command = true
 

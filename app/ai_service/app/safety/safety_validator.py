@@ -1,5 +1,5 @@
 """LLM safety validation using Constitutional AI and content moderation."""
-from langchain_openai import ChatOpenAI
+from langchain_anthropic import ChatAnthropic
 from langchain_core.prompts import ChatPromptTemplate
 from openai import OpenAI
 import re
@@ -15,12 +15,16 @@ class SafetyValidator:
 
     def __init__(self):
         """Initialize safety validator."""
-        self.llm = ChatOpenAI(
-            model=settings.openai_model,
+        self.llm = ChatAnthropic(
+            model=settings.anthropic_model,
             temperature=0,
-            openai_api_key=settings.openai_api_key
+            anthropic_api_key=settings.anthropic_api_key
         )
-        self.openai_client = OpenAI(api_key=settings.openai_api_key)
+        
+        if settings.openai_api_key:
+            self.openai_client = OpenAI(api_key=settings.openai_api_key)
+        else:
+            self.openai_client = None
 
         # Constitutional AI principles for financial services
         self.principles = [
@@ -139,6 +143,10 @@ class SafetyValidator:
             Moderation result
         """
         try:
+            if not self.openai_client:
+                logger.warning("OpenAI client not available, skipping moderation check")
+                return {"flagged": False, "categories": []}
+                
             response = self.openai_client.moderations.create(input=text)
             result = response.results[0]
 

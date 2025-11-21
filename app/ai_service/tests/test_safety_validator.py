@@ -1,6 +1,7 @@
 """Tests for safety validation functionality."""
 import pytest
 from unittest.mock import patch, MagicMock
+import json
 from app.safety.safety_validator import SafetyValidator
 
 
@@ -9,8 +10,28 @@ class TestSafetyValidator:
 
     def test_init(self):
         """Test SafetyValidator initialization."""
-        validator = SafetyValidator()
-        assert validator is not None
+        with patch("app.safety.safety_validator.ChatAnthropic"):
+            validator = SafetyValidator()
+            assert validator is not None
+
+    @pytest.fixture
+    def mock_anthropic(self):
+        """Mock ChatAnthropic."""
+        from langchain_core.messages import AIMessage
+        
+        with patch("app.safety.safety_validator.ChatAnthropic") as mock:
+            llm = MagicMock()
+            mock.return_value = llm
+            
+            # Mock invoke response
+            message = AIMessage(content=json.dumps({
+                "passed": True,
+                "violations": []
+            }))
+            llm.invoke.return_value = message
+            llm.return_value = message
+            
+            yield llm
 
     def test_detect_pii_ssn(self, pii_test_cases):
         """Test SSN detection."""
@@ -256,7 +277,7 @@ class TestSafetyValidator:
         assert isinstance(result["moderation_flagged"], bool)
         assert isinstance(result["issues"], list)
 
-    def test_constitutional_ai_principles(self, mock_openai_client):
+    def test_constitutional_ai_principles(self, mock_openai_client, mock_anthropic):
         """Test constitutional AI validation is applied."""
         validator = SafetyValidator()
 
