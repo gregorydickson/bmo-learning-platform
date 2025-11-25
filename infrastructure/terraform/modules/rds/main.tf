@@ -155,14 +155,14 @@ resource "aws_db_instance" "main" {
   multi_az               = var.multi_az
 
   # Backups
-  backup_retention_period = var.backup_retention_period
-  backup_window           = "03:00-04:00" # UTC
-  maintenance_window      = "mon:04:00-mon:05:00"
-  skip_final_snapshot     = var.environment != "prod"
+  backup_retention_period   = var.backup_retention_period
+  backup_window             = "03:00-04:00" # UTC
+  maintenance_window        = "mon:04:00-mon:05:00"
+  skip_final_snapshot       = var.environment != "prod"
   final_snapshot_identifier = var.environment == "prod" ? "bmo-learning-${var.environment}-final-${formatdate("YYYY-MM-DD-hhmm", timestamp())}" : null
 
   # Performance Insights
-  performance_insights_enabled = true
+  performance_insights_enabled          = true
   performance_insights_retention_period = 7
 
   # Enhanced Monitoring
@@ -174,7 +174,7 @@ resource "aws_db_instance" "main" {
   parameter_group_name = aws_db_parameter_group.main.name
 
   # Protection
-  deletion_protection = var.deletion_protection
+  deletion_protection   = var.deletion_protection
   copy_tags_to_snapshot = true
 
   # Auto minor version upgrade

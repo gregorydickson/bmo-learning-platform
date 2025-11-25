@@ -67,25 +67,37 @@ variable "ecs_cluster_name" {
 variable "ai_service_cpu" {
   description = "CPU units for AI service"
   type        = number
-  default     = 1024
+  default     = 256 # Cost-optimized: 0.25 vCPU
 }
 
 variable "ai_service_memory" {
   description = "Memory (MB) for AI service"
   type        = number
-  default     = 2048
+  default     = 512 # Cost-optimized: 0.5 GB
 }
 
 variable "rails_api_cpu" {
   description = "CPU units for Rails API"
   type        = number
-  default     = 512
+  default     = 128 # Cost-optimized: minimum Fargate size
 }
 
 variable "rails_api_memory" {
   description = "Memory (MB) for Rails API"
   type        = number
-  default     = 1024
+  default     = 256 # Cost-optimized: minimum Fargate size
+}
+
+variable "sidekiq_cpu" {
+  description = "CPU units for Sidekiq"
+  type        = number
+  default     = 128 # Cost-optimized: minimum Fargate size
+}
+
+variable "sidekiq_memory" {
+  description = "Memory (MB) for Sidekiq"
+  type        = number
+  default     = 256 # Cost-optimized: minimum Fargate size
 }
 
 # Aurora Serverless v2 uses ACU (Aurora Capacity Units) instead of instance classes
@@ -94,7 +106,7 @@ variable "rails_api_memory" {
 variable "redis_node_type" {
   description = "ElastiCache Redis node type"
   type        = string
-  default     = "cache.t3.small"
+  default     = "cache.t3.micro" # Cost-optimized: $15/month vs $24/month
 }
 
 variable "ai_service_image" {
@@ -201,14 +213,13 @@ module "s3" {
   environment = var.environment
 }
 
-# Application Load Balancer Module
-module "alb" {
-  source = "../../modules/alb"
+# Network Load Balancer Module (Cost-optimized: $18/month vs $25/month ALB)
+module "nlb" {
+  source = "../../modules/nlb"
 
   environment       = var.environment
   vpc_id            = module.vpc.vpc_id
   public_subnet_ids = module.vpc.public_subnet_ids
-  security_group_id = module.security_groups.alb_security_group_id
   certificate_arn   = var.acm_certificate_arn
 }
 
@@ -240,8 +251,8 @@ module "ecs_services" {
   rails_api_image  = var.rails_api_image
 
   # Load balancer target groups
-  ai_service_target_group_arn = module.alb.ai_service_target_group_arn
-  rails_api_target_group_arn  = module.alb.rails_api_target_group_arn
+  ai_service_target_group_arn = module.nlb.ai_service_target_group_arn
+  rails_api_target_group_arn  = module.nlb.rails_api_target_group_arn
 
   # Secrets
   secret_arns = {
@@ -260,12 +271,14 @@ module "ecs_services" {
   ai_service_memory = var.ai_service_memory
   rails_api_cpu     = var.rails_api_cpu
   rails_api_memory  = var.rails_api_memory
+  sidekiq_cpu       = var.sidekiq_cpu
+  sidekiq_memory    = var.sidekiq_memory
 
   # Service Communication
-  ai_service_url     = "http://${module.alb.alb_dns_name}"
+  ai_service_url     = "http://${module.nlb.nlb_dns_name}"
   ai_service_api_key = var.ai_service_api_key
 
-  depends_on = [module.alb, module.secrets]
+  depends_on = [module.nlb, module.secrets]
 }
 
 # Outputs
@@ -279,9 +292,14 @@ output "ecs_cluster_name" {
   value       = module.ecs.cluster_name
 }
 
+output "nlb_dns_name" {
+  description = "Network Load Balancer DNS name"
+  value       = module.nlb.nlb_dns_name
+}
+
 output "alb_dns_name" {
-  description = "Application Load Balancer DNS name"
-  value       = module.alb.alb_dns_name
+  description = "Load Balancer DNS name (deprecated - use nlb_dns_name)"
+  value       = module.nlb.nlb_dns_name
 }
 
 output "aurora_endpoint" {

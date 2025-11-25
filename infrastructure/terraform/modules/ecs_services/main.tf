@@ -132,7 +132,7 @@ variable "ai_service_api_key" {
 # CloudWatch Log Groups
 resource "aws_cloudwatch_log_group" "ai_service" {
   name              = "/ecs/bmo-learning-${var.environment}/ai-service"
-  retention_in_days = 30
+  retention_in_days = 3 # Cost-optimized for demo: $2/month vs $5/month
 
   tags = {
     Name        = "bmo-learning-${var.environment}-ai-service"
@@ -142,7 +142,7 @@ resource "aws_cloudwatch_log_group" "ai_service" {
 
 resource "aws_cloudwatch_log_group" "rails_api" {
   name              = "/ecs/bmo-learning-${var.environment}/rails-api"
-  retention_in_days = 30
+  retention_in_days = 3 # Cost-optimized for demo: $2/month vs $5/month
 
   tags = {
     Name        = "bmo-learning-${var.environment}-rails-api"
@@ -152,7 +152,7 @@ resource "aws_cloudwatch_log_group" "rails_api" {
 
 resource "aws_cloudwatch_log_group" "sidekiq" {
   name              = "/ecs/bmo-learning-${var.environment}/sidekiq"
-  retention_in_days = 30
+  retention_in_days = 3 # Cost-optimized for demo: $2/month vs $5/month
 
   tags = {
     Name        = "bmo-learning-${var.environment}-sidekiq"
@@ -255,13 +255,15 @@ resource "aws_ecs_task_definition" "ai_service" {
   }
 }
 
-# Rails API Task Definition
+# Rails API + Sidekiq Task Definition (Consolidated)
+# Runs Rails API and Sidekiq as sidecar containers in a single task
+# Cost savings: eliminates one Fargate task
 resource "aws_ecs_task_definition" "rails_api" {
   family                   = "bmo-learning-${var.environment}-rails-api"
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
-  cpu                      = var.rails_api_cpu
-  memory                   = var.rails_api_memory
+  cpu                      = var.rails_api_cpu + var.sidekiq_cpu       # Combined: Rails + Sidekiq
+  memory                   = var.rails_api_memory + var.sidekiq_memory # Combined: Rails + Sidekiq
   execution_role_arn       = var.task_execution_role_arn
   task_role_arn            = var.task_role_arn
 
@@ -269,6 +271,7 @@ resource "aws_ecs_task_definition" "rails_api" {
     {
       name  = "rails-api"
       image = var.rails_api_image
+      cpu   = var.rails_api_cpu # Rails API portion
 
       portMappings = [
         {
@@ -345,29 +348,11 @@ resource "aws_ecs_task_definition" "rails_api" {
       }
 
       essential = true
-    }
-  ])
-
-  tags = {
-    Name        = "bmo-learning-${var.environment}-rails-api"
-    Environment = var.environment
-  }
-}
-
-# Sidekiq Task Definition
-resource "aws_ecs_task_definition" "sidekiq" {
-  family                   = "bmo-learning-${var.environment}-sidekiq"
-  requires_compatibilities = ["FARGATE"]
-  network_mode             = "awsvpc"
-  cpu                      = var.sidekiq_cpu
-  memory                   = var.sidekiq_memory
-  execution_role_arn       = var.task_execution_role_arn
-  task_role_arn            = var.task_role_arn
-
-  container_definitions = jsonencode([
+    },
     {
       name    = "sidekiq"
       image   = var.rails_api_image
+      cpu     = var.sidekiq_cpu # Sidekiq portion
       command = ["bundle", "exec", "sidekiq", "-C", "config/sidekiq.yml"]
 
       environment = [
@@ -426,10 +411,14 @@ resource "aws_ecs_task_definition" "sidekiq" {
   ])
 
   tags = {
-    Name        = "bmo-learning-${var.environment}-sidekiq"
+    Name        = "bmo-learning-${var.environment}-rails-api"
     Environment = var.environment
   }
 }
+
+# Sidekiq Task Definition - REMOVED
+# Sidekiq now runs as a sidecar container in the rails_api task definition
+# This consolidation saves $17.50/month by eliminating one Fargate task
 
 # AI Service ECS Service
 resource "aws_ecs_service" "ai_service" {
@@ -497,30 +486,9 @@ resource "aws_ecs_service" "rails_api" {
   depends_on = [var.rails_api_target_group_arn]
 }
 
-# Sidekiq ECS Service
-resource "aws_ecs_service" "sidekiq" {
-  name            = "bmo-learning-${var.environment}-sidekiq"
-  cluster         = var.cluster_id
-  task_definition = aws_ecs_task_definition.sidekiq.arn
-  desired_count   = 1 # Fixed to 1 for demo/cost savings
-  launch_type     = "FARGATE"
-
-  network_configuration {
-    subnets          = var.public_subnet_ids
-    security_groups  = [var.security_group_id]
-    assign_public_ip = true # Required for public subnets (no NAT Gateway)
-  }
-
-  deployment_maximum_percent         = 200
-  deployment_minimum_healthy_percent = 50
-
-  enable_execute_command = true
-
-  tags = {
-    Name        = "bmo-learning-${var.environment}-sidekiq"
-    Environment = var.environment
-  }
-}
+# Sidekiq ECS Service - REMOVED
+# Sidekiq now runs as a sidecar container in the rails_api ECS service
+# This consolidation saves one Fargate task ($17.50/month)
 
 # Auto Scaling for AI Service
 resource "aws_appautoscaling_target" "ai_service" {
@@ -576,11 +544,8 @@ output "ai_service_task_definition_arn" {
 }
 
 output "rails_api_task_definition_arn" {
-  value = aws_ecs_task_definition.rails_api.arn
-}
-
-output "sidekiq_task_definition_arn" {
-  value = aws_ecs_task_definition.sidekiq.arn
+  description = "Rails API task definition ARN (includes Sidekiq sidecar)"
+  value       = aws_ecs_task_definition.rails_api.arn
 }
 
 output "ai_service_service_name" {
@@ -588,9 +553,6 @@ output "ai_service_service_name" {
 }
 
 output "rails_api_service_name" {
-  value = aws_ecs_service.rails_api.name
-}
-
-output "sidekiq_service_name" {
-  value = aws_ecs_service.sidekiq.name
+  description = "Rails API service name (includes Sidekiq sidecar)"
+  value       = aws_ecs_service.rails_api.name
 }

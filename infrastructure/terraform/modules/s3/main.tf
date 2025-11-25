@@ -125,7 +125,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "backups" {
     }
 
     transition {
-      days          = 120  # Must be 90 days after GLACIER transition
+      days          = 120 # Must be 90 days after GLACIER transition
       storage_class = "DEEP_ARCHIVE"
     }
 

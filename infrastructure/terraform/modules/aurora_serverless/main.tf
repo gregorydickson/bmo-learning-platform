@@ -146,7 +146,7 @@ resource "aws_rds_cluster" "main" {
   db_cluster_parameter_group_name = aws_rds_cluster_parameter_group.main.name
 
   # Protection
-  deletion_protection = var.environment == "prod"
+  deletion_protection   = var.environment == "prod"
   copy_tags_to_snapshot = true
 
   tags = {
@@ -175,7 +175,7 @@ resource "aws_rds_cluster_instance" "main" {
   engine_version = aws_rds_cluster.main.engine_version
 
   # Performance Insights
-  performance_insights_enabled = true
+  performance_insights_enabled          = true
   performance_insights_retention_period = 7
 
   # Monitoring
